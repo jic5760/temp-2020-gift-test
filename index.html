@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>은사테스트</title>
+    <style>
+        table {
+            /*border: 1px solid #333;*/
+            width: 100%;
+        }
+
+        thead {
+            font-weight: bold;
+        }
+
+        tbody {
+
+        }
+
+        img {
+            max-width: 100%;
+        }
+
+        .topMaru {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div>
+        <table>
+            <thead>
+            <tr>
+                <td>번호</td>
+                <td>질문</td>
+                <td>매우(5점)</td>
+                <td>대체로(3점)</td>
+                <td>조금(1점)</td>
+                <td>전혀(0점)</td>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="(item, index) in list" :key="'question-' + index">
+                <td>{{ item.index }}</td>
+                <td>{{ item.text }}</td>
+                <td><input type="radio" v-model="answers[item.index]" :name="'check-' + index" value="5" /></td>
+                <td><input type="radio" v-model="answers[item.index]" :name="'check-' + index" value="3" /></td>
+                <td><input type="radio" v-model="answers[item.index]" :name="'check-' + index" value="1" /></td>
+                <td><input type="radio" v-model="answers[item.index]" :name="'check-' + index" value="0" /></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <input type="button" v-on:click="confirm" value="확인하기" />
+    </div>
+    <div v-if="showResultPage">
+        <div>
+            <table>
+                <thead>
+                <tr>
+                    <td>목록</td>
+                    <td>은사</td>
+                    <td>합계</td>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(ckey, index) in categoryKeys" :key="'result-cate-' + index">
+                    <td>{{ ckey }}</td>
+                    <td>{{ analyseCategories[ckey].text }}</td>
+                    <td>{{ analyseData[ckey].sum }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <table>
+                <thead>
+                <tr>
+                    <td>순위</td>
+                    <td>합계</td>
+                    <td>해당마루</td>
+                    <td>핵심개념</td>
+                    <td>목록</td>
+                    <td>사역팀</td>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(item, index) in sortedPlacements" :key="'result-place-' + index">
+                    <td :class="{'topMaru': index === 0}">{{ index + 1 }}</td>
+                    <td :class="{'topMaru': index === 0}">{{ item.sum }}</td>
+                    <td :class="{'topMaru': index === 0}">{{ item.placement.maru }}</td>
+                    <td :class="{'topMaru': index === 0}">{{ item.placement.concept }}</td>
+                    <td :class="{'topMaru': index === 0}">{{ item.placement.categories.map(v => `${v}(${analyseCategories[v].text})`).join(', ') }}</td>
+                    <td :class="{'topMaru': index === 0}">{{ item.placement.ministryTeams.join(', ') }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <img class="detailimage" src="./images/result-details.png" />
+        </div>
+    </div>
+</div>
+<script src="./js/vue.min.js"></script>
+<script>
+    function hasValueInArray(arr, value) {
+      for (var i=0; i<arr.length; i++) {
+        if (arr[i] === value)
+          return true;
+      }
+      return false;
+    }
+    var app = new Vue({
+      el: '#app',
+      data: {
+        list: [
+          {index: 1, text: '죄를 깨닫게 하거나 삶의 변화를 유도하는 이야기를 다른 이들에게 조리있게 전한다.'},
+          {index: 2, text: '찬양하는 시간에 앞에서 찬양팀으로 섬기고 싶은 마음이 크다'},
+          {index: 3, text: '성경 지식을 상대방이 이해하기 쉽게 가르칠 수 있다.'},
+          {index: 4, text: '평소 꾸준히 성경을 읽고 공부한다.'},
+          {index: 5, text: '개인적인 문제 또는 영적인 문제에 관해 종종 상담 요청을 받고 있다.'},
+          {index: 6, text: '남의 고통을 자신의 고통처럼 느끼고 그들과 함께 하는 것을 즐거워한다.'},
+          {index: 7, text: '다른 사람의 문제 해결에 나의 권면이 도움이 되었다는 소리를 자주 듣는다.'},
+          {index: 8, text: '친구들을 인도하고 영적으로 지도해주는 일에 두려움을 느끼지 않는다.'},
+          {index: 9, text: '주위 사람들에게 복음을 소개하면 잘 받아들이는 편이다.'},
+          {index: 10, text: '주님과 청소년교회를 위해 물질을 사용하는데 평소 거리낌을 갖지 않는다.'},
+          {index: 11, text: '조그만 일이라도 청소년교회를 위해서 일할 수 있다는 것 자체에 감사한 마음이 든다.'},
+          {index: 12, text: '청소년교회를 위해서 일할 때마다 영적인 보람과 성장을 경험한다.'},
+          {index: 13, text: '어떤 일을 맡아 추진해 나갈 때 진행이 잘 이루어진다는 평가를 받는다.'},
+          {index: 14, text: '사람, 물질, 아이디어 등의 자원을 찾아내 편성하고 계호기하는 일에 능숙하다.'},
+          {index: 15, text: '자신의 예술적인 끼와 재능으로 하나님께 영광 돌리고 싶다'},
+          {index: 16, text: '환난 중에 있더라도 하나님의 도우심을 의심해 본 적이 거의 없다.'},
+          {index: 17, text: '남을 위해 기도한 후에 구체적인 결과가 나타나는 것을 자주 경험한다.'},
+          {index: 18, text: '다른 나라 사람들과 접촉하고 어울리는 것에 큰 어려움이 없다.'},
+          {index: 19, text: '특별한 시간과 상황에서 하나님의 뜻을 강력하게 느낄 때가 있다.'},
+          {index: 20, text: '자신의 음악적 재능으로 하나님께 영광 돌리고 싶다'},
+          {index: 21, text: '사람들에게 성경을 가르친 후에 그들의 가치관과 행동이 쉽게 변화되는 것을 본다.'},
+          {index: 22, text: '말씀을 읽거나 공부할 때 생활에 적용될 수 있는 진리들을 쉽게 발견한다.'},
+          {index: 23, text: '문제의 해결책을 제시하여 다른 이들의 필요를 태워준다는 소리를 종종 듣는다.'},
+          {index: 24, text: '다른 사람들이 무엇을 필요로 할 때 그것을 실제적으로 채워주는 것을 좋아한다.'},
+          {index: 25, text: '어려움에 처한 사람들에게 소망의 말씀을 전해주면 곧 힘을 얻곤 한다.'},
+          {index: 26, text: '소그룹 모임을 인도할 때마다 그 모임이 양적으로 질적으로 부흥된다.'},
+          {index: 27, text: '전도 훈련 프로그램이 있으면 빠짐없이 참석하는 편이다.'},
+          {index: 28, text: '구제와 지역봉사를 위한 자원봉사에 기쁘게 동참한다.'},
+          {index: 29, text: '나는 생각하는 스타일이라기보다는 행동하는 스타일에 속한다.'},
+          {index: 30, text: '다른 사람들이 더 일을 잘 할 수 있도록 보조하는 역할이 기쁘다.'},
+          {index: 31, text: '모두가 공감하는 목표나 방법을 제시함으로 내 의견이 자주 채택된다.'},
+          {index: 32, text: '어떤 일을 할 때에는 세밀한 부분까지도 철저히, 신중하게 다루는 편이다.'},
+          {index: 33, text: '연극, 댄스, 드라마 등 다양한 예술 분야에 관심이 많다.'},
+          {index: 34, text: '남들이 생각하지 못하는 거대한 비전을 그려볼 때가 많다.'},
+          {index: 35, text: '기도 부탁을 받으면 최소한 일주일 이상 그 제목을 놓고 기도한다.'},
+          {index: 36, text: '복음을 전하기 위해 다른 나라의 문화나 언어를 배우는 것이 즐겁다.'},
+          {index: 37, text: '하나님으로부터 오는 직접, 간접적인 메시지를 적시에 전달한다는 평을 듣는다.'},
+          {index: 38, text: '주위 사람들에게 노래나 악기로 찬양하라는 권유를 받아본 적이 있다.'},
+          {index: 39, text: '평소 성경구절을 암송하고 있으며 암송한 구절을 자주 활용한다.'},
+          {index: 40, text: '성경구절이나 성경적 진리에 관해 종종 나에게 물어오는 사람들이 있다.'},
+          {index: 41, text: '어떤 사건에 대한 결과를 정확하게 예측하곤 한다.'},
+          {index: 42, text: '사람들은 어려운 사람을 돕는 일이 생길 때마다 나를 찾는다.'},
+          {index: 43, text: '사람들의 잠재력을 제대로 파악하며 필요한 사역에 참여하도록 잘 이끈다.'},
+          {index: 44, text: '사람을 양육하기 위해서 오랜 기간 인내를 가지고 지켜보며 돌보는 편이다.'},
+          {index: 45, text: '다른 어떤 일보다 불신자가 예수님을 영접했을 때 가장 기쁘다.'},
+          {index: 46, text: '하나님의 일을 하다보면 필요한 재정을 때맞춰 공급받곤 한다.'},
+          {index: 47, text: '드러나지 않는 일, 평범한 일에도 싫증을 내거나 불평하지 않는 편이다.'},
+          {index: 48, text: '남모르게 다른 사람들을 돕는 것이 기쁘고 보람스럽다.'},
+          {index: 49, text: '내가 어떤 일을 추진하고자 할 때 사람들은 신뢰를 보이며 따라준다.'},
+          {index: 50, text: '결속력이 약한 모임이나 기관을 보다 강하게 묶어주는 일을 하고 싶다.'},
+          {index: 51, text: '사람들 앞에서 자신의 재능을 보여주고 공연하는 것에 기쁨과 보람을 느낀다.'},
+          {index: 52, text: '하나님께서 원하신다는 생각이 들면 어떤 반대를 무릎 쓰고서라도 추진 할 수 있다.'},
+          {index: 53, text: '기도하는 것이 즐거우며 하나님이 자신의 기도를 인도하신다는 것을 경험한다.'},
+          {index: 54, text: '의식주 생활에 대한 관심이 적으며 환경의 적응력이 뛰어난 편이다.'}
+        ],
+        analyseCategories: {
+          'A': {items: [1, 19, 37], text: '예언'},
+          'B': {items: [2, 20, 38], text: '찬양'},
+          'C': {items: [3, 21, 39], text: '가르침'},
+          'D': {items: [4, 22, 40], text: '지식'},
+          'E': {items: [5, 23, 41], text: '지혜'},
+          'F': {items: [6, 24, 42], text: '긍휼'},
+          'G': {items: [7, 25, 43], text: '권면'},
+          'H': {items: [8, 26, 44], text: '목사'},
+          'I': {items: [9, 27, 45], text: '복음전도'},
+          'J': {items: [10, 28, 46], text: '구제'},
+          'K': {items: [11, 29, 47], text: '섬김'},
+          'L': {items: [12, 30, 48], text: '도움'},
+          'M': {items: [13, 31, 49], text: '다스림'},
+          'N': {items: [14, 32, 50], text: '행정'},
+          'O': {items: [15, 33, 51], text: '예술'},
+          'P': {items: [16, 34, 52], text: '믿음'},
+          'Q': {items: [17, 35, 53], text: '중보'},
+          'R': {items: [18, 36, 54], text: '선교사'},
+        },
+        placements: [
+          {
+            maru: '믿음마루',
+            concept: '예배',
+            categories: ['P', 'Q', 'O', 'B'],
+            ministryTeams: ['중보기도팀', '찬양팀', '워십댄스팀', '드라마팀']
+          },
+          {
+            maru: '사랑마루',
+            concept: '교제',
+            categories: ['F', 'G', 'N'],
+            ministryTeams: ['이벤트팀', 'QT나눔팀', '환영팀', '심방팀']
+          },
+          {
+            maru: '섬김마루',
+            concept: '봉사',
+            categories: ['J', 'K', 'L'],
+            ministryTeams: ['자원봉사팀', '환경디자인팀', '주보디자인팀']
+          },
+          {
+            maru: '소망마루',
+            concept: '선포',
+            categories: ['H', 'I', 'R', 'A'],
+            ministryTeams: ['거리전도팀', '관계전도팀', '단기선교팀', '선교사중보팀']
+          },
+          {
+            maru: '새김마루',
+            concept: '교육',
+            categories: ['C', 'D', 'E', 'M'],
+            ministryTeams: ['새친구 양육팀', '1:1 멘토팀', '단계별 훈련팀']
+          }
+        ],
+        answers: {},
+        analyseData: {},
+        showResultPage: false,
+        categoryKeys: [],
+        sortedPlacements: []
+      },
+      created() {
+        this.list.forEach(v => {
+          this.answers[v.index] = -1;
+        });
+        this.categoryKeys = Object.keys(this.analyseCategories);
+        this.answers = {"1":"5","2":"5","3":"5","4":"5","5":"3","6":"3","7":"3","8":"3","9":"1","10":"1","11":"1","12":"1","13":"0","14":"0","15":"0","16":"0","17":"1","18":"1","19":"1","20":"1","21":"3","22":"3","23":"3","24":"3","25":"5","26":"5","27":"5","28":"5","29":"5","30":"3","31":"3","32":"3","33":"3","34":"3","35":"1","36":"1","37":"1","38":"1","39":"1","40":"0","41":"0","42":"0","43":"0","44":"0","45":"1","46":"3","47":"5","48":"5","49":"5","50":"3","51":"3","52":"1","53":"1","54":"1"};
+      },
+      methods: {
+        confirm() {
+          Object.keys(this.analyseCategories).forEach((key) => {
+            const item = this.analyseCategories[key];
+            this.analyseData[key] = {
+              sum: item.items
+                .map(v => this.answers[v])
+                .reduce((sum, cur) => sum + parseInt(cur), 0)
+            };
+          });
+          this.sortedPlacements = this.placements.map((placement) => {
+            const matchedDatas = Object.keys(this.analyseData)
+                .filter(v => hasValueInArray(placement.categories, v))
+                .map(v => this.analyseData[v]);
+            return {
+              placement: placement,
+              sum: matchedDatas.reduce((sum, cur) => sum + parseInt(cur.sum), 0)
+            }
+          });
+          this.sortedPlacements.sort((x, y) => {
+            if (x.sum < y.sum)
+              return 1;
+            else if (x.sum > y.sum)
+              return -1;
+            else
+              return 0;
+          });
+          this.showResultPage = true;
+          console.log(this.sortedPlacements);
+        }
+      }
+    });
+</script>
+</body>
+</html>
