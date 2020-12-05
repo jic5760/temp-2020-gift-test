@@ -238,7 +238,7 @@
       },
       methods: {
         confirm() {
-          const unchecked = this.list.filter(v => (this.answers[v.index] === 'undefined') || (this.answers[v.index] < 0));
+          const unchecked = this.list.filter(v => (typeof this.answers[v.index] === 'undefined') || (parseInt(this.answers[v.index]) < 0));
           if (unchecked.length > 0) {
             alert(unchecked.map(v => v.index).join(', ') + ' 번 항목을 선택해 주세요');
             return ;
